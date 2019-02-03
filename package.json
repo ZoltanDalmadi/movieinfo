@@ -1,0 +1,15 @@
+{
+  "name": "movieinfo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "better-sqlite3": "^5.2.1",
+    "fastify": "^1.13.3",
+    "pino": "^5.10.6"
+  },
+  "devDependencies": {
+    "eslint": "^5.11.1"
+  }
+}
