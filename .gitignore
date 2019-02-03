@@ -2,3 +2,4 @@ node_modules
 images
 watched
 movieinfo.db
+yarn.lock
