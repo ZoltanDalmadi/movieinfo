@@ -9,7 +9,6 @@ const ENDPOINT_CONFIGURATION = `${BASE_URL}/configuration`;
 
 const ENDPOINT_MOVIE_CREDITS = movie_id => `${BASE_URL}/movie/${movie_id}/credits`;
 const ENDPOINT_PERSON = person_id => `${BASE_URL}/person/${person_id}`;
-const API_KEY = '3709d7c83bb78de89f9087776b362df0';
 const LANG = 'hu-HU';
 
 function transformMovieData(data, config) {
@@ -49,7 +48,9 @@ function transformActorDetails(data) {
   };
 }
 
-module.exports = logger => {
+module.exports = (logger, config) => {
+  const API_KEY = config.moviedb.apiKey;
+
   function getMovie(query, year, config) {
     const queryString = stringify({ api_key: API_KEY, language: LANG, query, year });
     const url = `${ENDPOINT_MOVIE}?${queryString}`;
