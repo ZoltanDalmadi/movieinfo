@@ -51,6 +51,9 @@ class TaskQueue {
 }
 
 module.exports = (db, moviedb, imageDownload, logger, config) => {
+  const { dbPath, watchedFolder } = config;
+  const imagesFolder = join(dbPath, 'images');
+
   function removeMovie(movieFolder) {
     logger.info(`Removing movie folder ${movieFolder}...`);
     return Promise.resolve(db.deleteMovie(movieFolder));
@@ -74,7 +77,7 @@ module.exports = (db, moviedb, imageDownload, logger, config) => {
     const quality = deduceQuality(movieFolder);
 
     return moviedb(term, year)
-      .then(movie => imageDownload(movie, config.imagesFolder))
+      .then(movie => imageDownload(movie, imagesFolder))
       .then(movie => db.persistMovie(movie, movieFolder, quality))
       .catch(console.error);
   }
@@ -93,23 +96,16 @@ module.exports = (db, moviedb, imageDownload, logger, config) => {
     await Promise.all(needToDelete.map(removeMovie));
   }
 
-  const tq = new TaskQueue(() => cleanup(config.imagesFolder));
+  const tq = new TaskQueue(() => cleanup(imagesFolder));
 
   return {
-    start: () => {
+    start() {
       logger.info('Syncing...');
-      return tq.push(() => sync(config.watchedFolder));
+      return tq.push(() => sync(watchedFolder));
     },
-    watch: () => {
+    watch() {
       logger.info('Watching folder...');
-      return watch(config.watchedFolder, () => tq.push(() => sync(config.watchedFolder)));
+      return watch(watchedFolder, () => tq.push(() => sync(watchedFolder)));
     }
   };
 };
-
-// const dirName = process.argv[3];
-
-// if (!isMovieInDB(dirName)) {
-// } else {
-//   logger.info(`Movie is already in DB at path: ${dirName}`);
-// }
