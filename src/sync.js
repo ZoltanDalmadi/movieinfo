@@ -15,40 +15,29 @@ function deduceQuality(dirname) {
       : 'SD';
 }
 
-class TaskQueue {
-  constructor(afterTasks) {
-    this.tasks = [];
-    this.running = false;
-    this.afterTasks = afterTasks;
+const tasks = [];
+let running = false;
+let afterTasks;
+
+const push = task => {
+  tasks.push(task);
+  if (!running) {
+    return run();
   }
 
-  push(task) {
-    this.tasks.push(task);
-    if (!this.running) {
-      return this.run();
-    }
+  return Promise.resolve();
+};
 
-    return Promise.resolve();
+const run = () => {
+  if (!tasks.length) {
+    running = false;
+    return afterTasks();
   }
 
-  async run() {
-    this.running = true;
-    let task = this.tasks.shift();
-
-    while (task) {
-      await task();
-      task = this.tasks.shift();
-    }
-
-    await this.afterTasks();
-
-    if (this.tasks.length) {
-      this.run();
-    }
-
-    this.running = false;
-  }
-}
+  running = true;
+  const task = tasks.shift();
+  return task().then(run);
+};
 
 module.exports = (db, moviedb, imageDownload, logger, config) => {
   const { dbPath, watchedFolder } = config;
@@ -96,16 +85,16 @@ module.exports = (db, moviedb, imageDownload, logger, config) => {
     await Promise.all(needToDelete.map(removeMovie));
   }
 
-  const tq = new TaskQueue(() => cleanup(imagesFolder));
+  afterTasks = () => cleanup(imagesFolder);
 
   return {
     start() {
       logger.info('Syncing...');
-      return tq.push(() => sync(watchedFolder));
+      return push(() => sync(watchedFolder));
     },
     watch() {
       logger.info('Watching folder...');
-      return watch(watchedFolder, () => tq.push(() => sync(watchedFolder)));
+      return watch(watchedFolder, () => push(() => sync(watchedFolder)));
     }
   };
 };
