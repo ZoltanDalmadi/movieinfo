@@ -47,7 +47,8 @@ CREATE TABLE movie (
                            NOT NULL,
     cover_id       INTEGER REFERENCES image (id)
                            NOT NULL,
-    quality        TEXT    NOT NULL
+    quality        TEXT    NOT NULL,
+    runtime        INTEGER NOT NULL
 );
 
 -- Table: movie_actors
@@ -151,6 +152,9 @@ CREATE VIEW movie_view AS
            movie.year,
            movie.original_title,
            movie.description,
+           movie.quality,
+           movie.runtime,
+           movie.path,
            backdrop.url AS backdrop,
            cover.url AS cover
       FROM movie
@@ -167,6 +171,7 @@ CREATE VIEW movies AS
            movie.original_title,
            movie.year,
            movie.quality,
+           movie.path,
            image.url AS cover
       FROM movie
            JOIN

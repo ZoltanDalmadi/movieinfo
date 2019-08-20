@@ -48,8 +48,8 @@ module.exports = (logger, { dbPath, dbSchema }) => {
 
   const insertMovie = db.prepare(`
     INSERT OR IGNORE INTO movie
-    (title, year, path, description, original_title, backdrop_id, cover_id, quality)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    (title, year, path, description, original_title, backdrop_id, cover_id, quality, runtime)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const deleteMovieStatement = db.prepare('DELETE FROM movie WHERE path = ?');
@@ -123,13 +123,13 @@ module.exports = (logger, { dbPath, dbSchema }) => {
   }
 
   const persistMovie = db.transaction((movie, path, quality) => {
-    const { title, year, description, original_title } = movie;
+    const { title, year, description, original_title, runtime } = movie;
 
     const cover_id = persistImage(movie.cover);
     const backdrop_id = persistImage(movie.backdrop);
 
     const info = insertMovie.run(
-      title, year, path, description, original_title, backdrop_id, cover_id, quality
+      title, year, path, description, original_title, backdrop_id, cover_id, quality, runtime
     );
 
     if (info.changes) {
