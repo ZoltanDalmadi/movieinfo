@@ -4,6 +4,7 @@ const axios = require('axios');
 // const BASE_URL = 'https://api.themoviedb.org/3';
 const BASE_URL = 'http://localhost:8080/moviedb';
 const ENDPOINT_MOVIE = `${BASE_URL}/search/movie`;
+const ENDPOINT_MOVIE_DETAILS = `${BASE_URL}/movie`;
 const ENDPOINT_GENRES = `${BASE_URL}/genre/movie/list`;
 const ENDPOINT_CONFIGURATION = `${BASE_URL}/configuration`;
 
@@ -11,13 +12,12 @@ const ENDPOINT_MOVIE_CREDITS = movie_id => `${BASE_URL}/movie/${movie_id}/credit
 const ENDPOINT_PERSON = person_id => `${BASE_URL}/person/${person_id}`;
 const LANG = 'hu-HU';
 
-function transformMovieData(data, config) {
-  const movie = data.results[0];
-
+function transformMovieData(movie, config) {
   return {
     id: movie.id,
     title: movie.title,
     year: Number(movie.release_date.substr(0, 4)),
+    runtime: movie.runtime,
     description: movie.overview,
     original_title: movie.original_title,
     cover: config.images.base_url + 'original' + movie.poster_path,
@@ -51,14 +51,16 @@ function transformActorDetails(data) {
 module.exports = (logger, config) => {
   const API_KEY = config.moviedb.apiKey;
 
-  function getMovie(query, year, config) {
-    const queryString = stringify({ api_key: API_KEY, language: LANG, query, year });
+  async function getMovie(query, year, config) {
+    const queryString = stringify({ api_key: API_KEY, language: LANG, query, primary_release_year: year });
     const url = `${ENDPOINT_MOVIE}?${queryString}`;
 
     logger.info(`Searching for "${query} ${year}..."`);
 
-    return axios.get(url)
-      .then(({ data }) => transformMovieData(data, config));
+    const { data } = await axios.get(url);
+    const movie = data.results[0];
+    const { data: details } = await axios.get(`${ENDPOINT_MOVIE_DETAILS}/${movie.id}?${queryString}`);
+    return transformMovieData({ ...movie, runtime: details.runtime }, config);
   }
 
   function getMovieGenres(movie) {
